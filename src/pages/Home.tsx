@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { ArrowLeft, Truck, Shield, Clock, Zap, TrendingUp, Gift } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
 import { products } from '../data/products';
-import { categories } from '../data/categories';
+import { categories, getIconComponent } from '../data/categories';
 import { useThemeStore } from '../store/themeStore';
 
 export default function Home() {
@@ -40,9 +40,9 @@ export default function Home() {
   }, []);
 
   const banners = [
-    { title: 'تازه‌ترین میوه‌ها', subtitle: 'مستقیم از باغ به سفره شما', gradient: 'from-green-600 to-emerald-500', emoji: '🍎🍊🍋' },
-    { title: 'تخفیف‌های ویژه', subtitle: 'تا ۵۰٪ تخفیف روی محصولات منتخب', gradient: 'from-orange-500 to-red-500', emoji: '🎁🏷️✨' },
-    { title: 'ارسال فوری', subtitle: 'تحویل زیر ۱ ساعت در تهران', gradient: 'from-blue-600 to-purple-600', emoji: '🚀⚡📦' },
+    { title: 'تازه‌ترین میوه‌ها', subtitle: 'مستقیم از باغ به سفره شما', gradient: 'from-green-600 to-emerald-500' },
+    { title: 'تخفیف‌های ویژه', subtitle: 'تا ۵۰٪ تخفیف روی محصولات منتخب', gradient: 'from-orange-500 to-red-500' },
+    { title: 'ارسال فوری', subtitle: 'تحویل زیر ۱ ساعت در تهران', gradient: 'from-blue-600 to-purple-600' },
   ];
 
   return (
@@ -60,7 +60,6 @@ export default function Home() {
               <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg%20width%3D%2260%22%20height%3D%2260%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M30%200l15%2030-15%2030L15%2030z%22%20fill%3D%22rgba(255%2C255%2C255%2C0.03)%22%2F%3E%3C%2Fsvg%3E')]" />
               <div className="relative h-full flex items-center px-8 sm:px-12">
                 <div className="text-white space-y-3">
-                  <span className="text-4xl sm:text-5xl lg:text-6xl">{banner.emoji}</span>
                   <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black">{banner.title}</h2>
                   <p className="text-sm sm:text-base opacity-90">{banner.subtitle}</p>
                   <button className="mt-4 px-6 py-3 bg-white/20 backdrop-blur-sm rounded-xl text-sm font-bold hover:bg-white/30 transition-all border border-white/30">
@@ -121,7 +120,7 @@ export default function Home() {
               to={`/category/${cat.id}`}
               className={`flex flex-col items-center gap-2 p-4 rounded-2xl transition-all hover:scale-105 ${isDark ? 'bg-slate-800/50 hover:bg-slate-700/50 border-slate-700/50' : 'bg-white hover:bg-green-50 border-slate-100'} border`}
             >
-              <span className="text-3xl">{cat.icon}</span>
+              {(() => { const Icon = getIconComponent(cat.icon); return <Icon size={28} className="text-green-600" />; })()}
               <span className={`text-xs font-medium text-center ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>{cat.name}</span>
             </Link>
           ))}

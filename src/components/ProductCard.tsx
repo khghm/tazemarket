@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Minus, Heart, ShoppingCart, Star } from 'lucide-react';
+import { Plus, Minus, Heart, ShoppingCart, Star, Package } from 'lucide-react';
 import { Product } from '../data/products';
 import { useCartStore } from '../store/cartStore';
 import { useThemeStore } from '../store/themeStore';
@@ -62,7 +62,7 @@ export default function ProductCard({ product }: ProductCardProps) {
             />
           ) : (
             <div className={`w-full h-full rounded-xl flex items-center justify-center ${isDark ? 'bg-slate-700' : 'bg-slate-100'}`}>
-              <span className="text-4xl text-slate-300">📦</span>
+              <Package size={40} className="text-slate-300" />
             </div>
           )}
         </div>

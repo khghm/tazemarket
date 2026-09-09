@@ -78,10 +78,8 @@ export default function CartPage() {
               }`}
             >
               {/* Image */}
-              <div className={`w-20 h-20 rounded-xl flex items-center justify-center shrink-0 ${isDark ? 'bg-gray-700' : 'bg-gray-50'}`}>
-                <span className="text-4xl">
-                  {item.product.image.includes('🍎') ? '🍎' : item.product.image.includes('🍌') ? '🍌' : item.product.image.includes('🍅') ? '🍅' : item.product.image.includes('🥒') ? '🥒' : item.product.image.includes('🍊') ? '🍊' : item.product.image.includes('🥬') ? '🥬' : item.product.image.includes('🥕') ? '🥕' : item.product.image.includes('🍋') ? '🍋' : item.product.image.includes('🥛') ? '🥛' : item.product.image.includes('🫙') ? '🫙' : item.product.image.includes('🧀') ? '🧀' : item.product.image.includes('🧈') ? '🧈' : item.product.image.includes('🥚') ? '🥚' : item.product.image.includes('🍗') ? '🍗' : item.product.image.includes('🥩') ? '🥩' : item.product.image.includes('🐟') ? '🐟' : item.product.image.includes('🌭') ? '🌭' : item.product.image.includes('💧') ? '💧' : item.product.image.includes('🥤') ? '🥤' : item.product.image.includes('🧃') ? '🧃' : item.product.image.includes('🍵') ? '🍵' : item.product.image.includes('🍚') ? '🍚' : item.product.image.includes('🫒') ? '🫒' : item.product.image.includes('🍬') ? '🍬' : item.product.image.includes('🧴') ? '🧴' : item.product.image.includes('🧻') ? '🧻' : item.product.image.includes('🪥') ? '🪥' : item.product.image.includes('👶') ? '👶' : item.product.image.includes('🍼') ? '🍼' : item.product.image.includes('🍝') ? '🍝' : item.product.image.includes('🍿') ? '🍿' : '📦'}
-                </span>
+              <div className={`w-20 h-20 rounded-xl overflow-hidden shrink-0 ${isDark ? 'bg-gray-700' : 'bg-gray-50'}`}>
+                <img src={item.product.image} alt={item.product.name} className="w-full h-full object-cover" />
               </div>
 
               {/* Info */}

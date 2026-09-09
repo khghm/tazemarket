@@ -4,7 +4,7 @@ import { Search, ShoppingCart, Moon, Sun, Menu, X, User, MapPin, Clock, Zap, Shi
 import { useCartStore } from '../store/cartStore';
 import { useThemeStore } from '../store/themeStore';
 import { products } from '../data/products';
-import { categories } from '../data/categories';
+import { categories, getIconComponent } from '../data/categories';
 
 export default function Header() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -217,7 +217,7 @@ export default function Header() {
                 to={`/category/${cat.id}`}
                 className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm whitespace-nowrap transition-all ${isDark ? 'hover:bg-slate-800 text-slate-300' : 'hover:bg-green-50 text-slate-700 hover:text-green-700'}`}
               >
-                <span className="text-base">{cat.icon}</span>
+                {(() => { const Icon = getIconComponent(cat.icon); return <Icon size={16} className="text-green-600" />; })()}
                 <span className="font-medium">{cat.name}</span>
               </Link>
             ))}
@@ -246,7 +246,7 @@ export default function Header() {
                 onClick={() => setShowMobileMenu(false)}
                 className={`flex items-center gap-3 p-3 rounded-xl ${isDark ? 'hover:bg-slate-800' : 'hover:bg-slate-50'}`}
               >
-                <span className="text-xl">{cat.icon}</span>
+                {(() => { const Icon = getIconComponent(cat.icon); return <Icon size={20} className="text-green-600" />; })()}
                 <span className="font-medium">{cat.name}</span>
               </Link>
             ))}

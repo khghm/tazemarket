@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { useEffect } from 'react';
+import { Home as HomeIcon, Grid, ShoppingCart, Package, User, Settings } from 'lucide-react';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import Home from './pages/Home';
@@ -46,27 +47,30 @@ function App() {
         <nav className={`md:hidden fixed bottom-0 left-0 right-0 border-t z-50 ${isDark ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'}`}>
           <div className="flex items-center justify-around py-2">
             {[
-              { path: '/', icon: '🏠', label: 'خانه' },
-              { path: '/category/fruits-vegetables', icon: '📂', label: 'دسته‌بندی' },
-              { path: '/cart', icon: '🛒', label: 'سبد' },
-              { path: '/tracking', icon: '📦', label: 'سفارشات' },
-              { path: '/profile', icon: '👤', label: 'حساب' },
-            ].map((item) => (
-              <a
-                key={item.path}
-                href={item.path}
-                className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-xl transition-colors ${isDark ? 'text-gray-400' : 'text-gray-500'} hover:text-green-600`}
-              >
-                <span className="text-xl">{item.icon}</span>
-                <span className="text-[10px]">{item.label}</span>
-              </a>
-            ))}
+              { path: '/', icon: HomeIcon, label: 'خانه' },
+              { path: '/category/fruits-vegetables', icon: Grid, label: 'دسته‌بندی' },
+              { path: '/cart', icon: ShoppingCart, label: 'سبد' },
+              { path: '/tracking', icon: Package, label: 'سفارشات' },
+              { path: '/profile', icon: User, label: 'حساب' },
+            ].map((item) => {
+              const Icon = item.icon;
+              return (
+                <a
+                  key={item.path}
+                  href={item.path}
+                  className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-xl transition-colors ${isDark ? 'text-gray-400' : 'text-gray-500'} hover:text-green-600`}
+                >
+                  <Icon size={20} />
+                  <span className="text-[10px]">{item.label}</span>
+                </a>
+              );
+            })}
           </div>
         </nav>
 
         {/* Admin Link (hidden, accessible via URL) */}
         <a href="/admin" className="fixed bottom-20 right-2 md:bottom-4 md:right-4 w-10 h-10 bg-gray-800 text-white rounded-full flex items-center justify-center text-xs opacity-30 hover:opacity-100 transition-opacity z-40">
-          ⚙️
+          <Settings size={18} />
         </a>
       </div>
     </BrowserRouter>

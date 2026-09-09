@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import { SlidersHorizontal, Grid3X3, List, X } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
 import { products, Product } from '../data/products';
-import { categories } from '../data/categories';
+import { categories, getIconComponent } from '../data/categories';
 import { useThemeStore } from '../store/themeStore';
 
 export default function CategoryPage() {
@@ -64,7 +64,7 @@ export default function CategoryPage() {
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center gap-3 mb-2">
-          <span className="text-3xl">{category?.icon}</span>
+          {(() => { const Icon = getIconComponent(category?.icon || 'Apple'); return <Icon size={28} className="text-green-600" />; })()}
           <h1 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>
             {category?.name || 'همه محصولات'}
           </h1>

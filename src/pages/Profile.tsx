@@ -158,7 +158,7 @@ export default function ProfilePage() {
           {mockFavorites.map((item) => (
             <div key={item.id} className={`flex items-center gap-4 p-4 rounded-2xl border ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'}`}>
               <div className={`w-14 h-14 rounded-xl flex items-center justify-center ${isDark ? 'bg-gray-700' : 'bg-gray-50'}`}>
-                <span className="text-2xl">📦</span>
+                <Package size={24} className="text-slate-300" />
               </div>
               <div className="flex-1">
                 <p className={`text-sm font-medium ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>{item.name}</p>

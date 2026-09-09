@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowRight, Star, Heart, ShoppingCart, Plus, Minus, Truck, Shield, Clock, ChevronDown, ChevronUp } from 'lucide-react';
+import { ArrowRight, Star, Heart, ShoppingCart, Plus, Minus, Truck, Shield, Clock, ChevronDown, ChevronUp, Package } from 'lucide-react';
 import { products, reviews } from '../data/products';
 import { useCartStore } from '../store/cartStore';
 import { useThemeStore } from '../store/themeStore';
@@ -66,7 +66,7 @@ export default function ProductPage() {
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center">
-                <span className="text-6xl">📦</span>
+                <Package size={60} className="text-slate-300" />
               </div>
             )}
           </div>
