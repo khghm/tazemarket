@@ -318,7 +318,7 @@ export default function AdminPage() {
             {activeTab === 'reviews' && <ReviewsTab isDark={isDark} />}
 
             {/* Reports */}
-            {activeTab === 'reports' && <ReportsTab analytics={analytics} isDark={isDark} />}
+            {activeTab === 'reports' && <ReportsTab analytics={analytics} isDark={isDark} store={store} />}
 
             {/* Settings */}
             {activeTab === 'settings' && <SettingsTab isDark={isDark} showNotif={showNotif} />}
@@ -1272,26 +1272,216 @@ function ReviewsTab({ isDark }: any) {
 }
 
 // Reports Tab
-function ReportsTab({ analytics, isDark }: any) {
+function ReportsTab({ analytics, isDark, store }: any) {
+  const [timeFilter, setTimeFilter] = useState<'7days' | '30days' | '90days' | 'all'>('7days');
+
+  const handleExportReport = (format: 'csv' | 'pdf') => {
+    if (format === 'csv') {
+      // Export to CSV
+      const csvContent = [
+        ['گزارش عملکرد تازه‌مارکت', '', '', ''],
+        ['تاریخ گزارش:', new Date().toLocaleDateString('fa-IR'), '', ''],
+        ['', '', '', ''],
+        ['شاخص', 'مقدار', '', ''],
+        ['درآمد کل', `${analytics.totalRevenue.toLocaleString()} تومان`, '', ''],
+        ['تعداد سفارشات', analytics.totalOrders.toString(), '', ''],
+        ['تعداد کاربران', analytics.totalUsers.toString(), '', ''],
+        ['تعداد محصولات', analytics.totalProducts.toString(), '', ''],
+        ['میانگین سبد خرید', `${Math.round(analytics.averageOrderValue).toLocaleString()} تومان`, '', ''],
+        ['نرخ تبدیل', `${analytics.conversionRate.toFixed(1)}%`, '', ''],
+        ['', '', '', ''],
+        ['پرفروش‌ترین محصولات', '', '', ''],
+        ['نام محصول', 'تعداد فروش', '', ''],
+        ...analytics.topProducts.map((p: any) => [p.name, p.count.toString(), '', '']),
+        ['', '', '', ''],
+        ['توزیع سفارشات بر اساس وضعیت', '', '', ''],
+        ['وضعیت', 'تعداد', '', ''],
+        ...analytics.ordersByStatus.map((s: any) => [s.status, s.count.toString(), '', '']),
+        ['', '', '', ''],
+        ['درآمد روزانه', '', '', ''],
+        ['تاریخ', 'درآمد (تومان)', '', ''],
+        ...analytics.revenueByDay.map((d: any) => [d.date, d.revenue.toLocaleString(), '', '']),
+      ].map(row => row.join(',')).join('\n');
+
+      const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `report-${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } else {
+      // Export to HTML (printable)
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
+        printWindow.document.write(`
+          <!DOCTYPE html>
+          <html dir="rtl" lang="fa">
+          <head>
+            <meta charset="UTF-8">
+            <title>گزارش عملکرد تازه‌مارکت</title>
+            <style>
+              body { font-family: 'Vazirmatn', Tahoma, sans-serif; padding: 40px; direction: rtl; }
+              h1 { color: #16a34a; border-bottom: 3px solid #16a34a; padding-bottom: 10px; }
+              h2 { color: #334155; margin-top: 30px; }
+              table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+              th, td { border: 1px solid #e2e8f0; padding: 12px; text-align: right; }
+              th { background: #f1f5f9; font-weight: bold; }
+              .stat-box { display: inline-block; margin: 10px; padding: 20px; border: 2px solid #e2e8f0; border-radius: 8px; min-width: 200px; }
+              .stat-value { font-size: 24px; font-weight: bold; color: #16a34a; }
+              .stat-label { color: #64748b; font-size: 14px; }
+              @media print { body { padding: 20px; } }
+            </style>
+          </head>
+          <body>
+            <h1>گزارش عملکرد تازه‌مارکت</h1>
+            <p>تاریخ گزارش: ${new Date().toLocaleDateString('fa-IR')}</p>
+            
+            <h2>شاخص‌های کلیدی</h2>
+            <div>
+              <div class="stat-box">
+                <div class="stat-value">${(analytics.totalRevenue / 1000000).toFixed(1)}M</div>
+                <div class="stat-label">درآمد کل (تومان)</div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-value">${analytics.totalOrders}</div>
+                <div class="stat-label">تعداد سفارشات</div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-value">${analytics.totalUsers}</div>
+                <div class="stat-label">تعداد کاربران</div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-value">${Math.round(analytics.averageOrderValue).toLocaleString()}</div>
+                <div class="stat-label">میانگین سبد خرید (تومان)</div>
+              </div>
+            </div>
+
+            <h2>پرفروش‌ترین محصولات</h2>
+            <table>
+              <thead>
+                <tr><th>نام محصول</th><th>تعداد فروش</th></tr>
+              </thead>
+              <tbody>
+                ${analytics.topProducts.map((p: any) => `<tr><td>${p.name}</td><td>${p.count}</td></tr>`).join('')}
+              </tbody>
+            </table>
+
+            <h2>توزیع سفارشات بر اساس وضعیت</h2>
+            <table>
+              <thead>
+                <tr><th>وضعیت</th><th>تعداد</th></tr>
+              </thead>
+              <tbody>
+                ${analytics.ordersByStatus.map((s: any) => `<tr><td>${s.status}</td><td>${s.count}</td></tr>`).join('')}
+              </tbody>
+            </table>
+
+            <h2>درآمد روزانه (۷ روز اخیر)</h2>
+            <table>
+              <thead>
+                <tr><th>تاریخ</th><th>درآمد (تومان)</th></tr>
+              </thead>
+              <tbody>
+                ${analytics.revenueByDay.map((d: any) => `<tr><td>${d.date}</td><td>${d.revenue.toLocaleString()}</td></tr>`).join('')}
+              </tbody>
+            </table>
+
+            <script>window.onload = function() { window.print(); }</script>
+          </body>
+          </html>
+        `);
+        printWindow.document.close();
+      }
+    }
+  };
+
   return (
     <div className="space-y-6">
-      <div className="grid md:grid-cols-3 gap-4">
-        <div className={`p-5 rounded-2xl ${isDark ? 'bg-slate-800/50 border-slate-700/50' : 'bg-white border-slate-100'} border`}>
-          <p className="text-sm text-slate-500 mb-1">میانگین سبد خرید</p>
-          <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>{Math.round(analytics.averageOrderValue).toLocaleString()} ت</p>
+      {/* Header with Export Buttons */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>گزارشات و آمار</h2>
+          <p className="text-sm text-slate-500 mt-1">تحلیل عملکرد کسب‌وکار</p>
         </div>
-        <div className={`p-5 rounded-2xl ${isDark ? 'bg-slate-800/50 border-slate-700/50' : 'bg-white border-slate-100'} border`}>
-          <p className="text-sm text-slate-500 mb-1">نرخ تبدیل</p>
-          <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>{analytics.conversionRate.toFixed(1)}%</p>
-        </div>
-        <div className={`p-5 rounded-2xl ${isDark ? 'bg-slate-800/50 border-slate-700/50' : 'bg-white border-slate-100'} border`}>
-          <p className="text-sm text-slate-500 mb-1">سبدهای رها شده</p>
-          <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>{analytics.totalOrders}</p>
+        <div className="flex items-center gap-2">
+          <select
+            value={timeFilter}
+            onChange={(e) => setTimeFilter(e.target.value as any)}
+            className={`px-4 py-2.5 rounded-xl text-sm ${isDark ? 'bg-slate-800 border-slate-700 text-slate-300' : 'bg-white border-slate-200'} border`}
+          >
+            <option value="7days">۷ روز اخیر</option>
+            <option value="30days">۳۰ روز اخیر</option>
+            <option value="90days">۳ ماه اخیر</option>
+            <option value="all">کل دوره</option>
+          </select>
+          <button
+            onClick={() => handleExportReport('csv')}
+            className={`px-4 py-2.5 rounded-xl text-sm font-medium ${isDark ? 'bg-slate-800 hover:bg-slate-700 text-slate-300' : 'bg-white hover:bg-slate-50 text-slate-700'} border ${isDark ? 'border-slate-700' : 'border-slate-200'} flex items-center gap-2`}
+          >
+            <Download size={16} />
+            <span className="hidden sm:inline">خروجی CSV</span>
+          </button>
+          <button
+            onClick={() => handleExportReport('pdf')}
+            className="btn-primary"
+          >
+            <FileText size={16} />
+            <span className="hidden sm:inline">خروجی PDF</span>
+          </button>
         </div>
       </div>
 
+      {/* Key Metrics */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className={`p-5 rounded-2xl ${isDark ? 'bg-slate-800/50 border-slate-700/50' : 'bg-white border-slate-100'} border`}>
+          <div className="flex items-center justify-between mb-2">
+            <DollarSign size={20} className="text-green-600" />
+            <span className="text-xs font-bold text-green-600 flex items-center gap-1">
+              <TrendingUp size={12} />+12%
+            </span>
+          </div>
+          <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>{(analytics.totalRevenue / 1000000).toFixed(1)}M</p>
+          <p className="text-xs text-slate-500 mt-1">درآمد کل (تومان)</p>
+        </div>
+        <div className={`p-5 rounded-2xl ${isDark ? 'bg-slate-800/50 border-slate-700/50' : 'bg-white border-slate-100'} border`}>
+          <div className="flex items-center justify-between mb-2">
+            <ShoppingCart size={20} className="text-blue-600" />
+            <span className="text-xs font-bold text-green-600 flex items-center gap-1">
+              <TrendingUp size={12} />+8%
+            </span>
+          </div>
+          <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>{analytics.totalOrders}</p>
+          <p className="text-xs text-slate-500 mt-1">تعداد سفارشات</p>
+        </div>
+        <div className={`p-5 rounded-2xl ${isDark ? 'bg-slate-800/50 border-slate-700/50' : 'bg-white border-slate-100'} border`}>
+          <div className="flex items-center justify-between mb-2">
+            <Activity size={20} className="text-purple-600" />
+            <span className="text-xs text-slate-500">میانگین</span>
+          </div>
+          <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>{Math.round(analytics.averageOrderValue / 1000)}K</p>
+          <p className="text-xs text-slate-500 mt-1">میانگین سبد خرید (تومان)</p>
+        </div>
+        <div className={`p-5 rounded-2xl ${isDark ? 'bg-slate-800/50 border-slate-700/50' : 'bg-white border-slate-100'} border`}>
+          <div className="flex items-center justify-between mb-2">
+            <Target size={20} className="text-orange-600" />
+            <span className="text-xs font-bold text-green-600 flex items-center gap-1">
+              <TrendingUp size={12} />+5%
+            </span>
+          </div>
+          <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>{analytics.conversionRate.toFixed(1)}%</p>
+          <p className="text-xs text-slate-500 mt-1">نرخ تبدیل</p>
+        </div>
+      </div>
+
+      {/* Revenue Chart */}
       <div className={`p-6 rounded-2xl ${isDark ? 'bg-slate-800/50 border-slate-700/50' : 'bg-white border-slate-100'} border`}>
-        <h3 className={`font-bold mb-4 ${isDark ? 'text-white' : 'text-slate-800'}`}>روند درآمد ۷ روز اخیر</h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className={`font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>روند درآمد</h3>
+          <span className="text-xs text-slate-500">بر اساس {timeFilter === '7days' ? '۷ روز' : timeFilter === '30days' ? '۳۰ روز' : timeFilter === '90days' ? '۳ ماه' : 'کل دوره'} اخیر</span>
+        </div>
         <ResponsiveContainer width="100%" height={300}>
           <AreaChart data={analytics.revenueByDay}>
             <defs>
@@ -1309,6 +1499,7 @@ function ReportsTab({ analytics, isDark }: any) {
         </ResponsiveContainer>
       </div>
 
+      {/* Top Products & Order Distribution */}
       <div className="grid md:grid-cols-2 gap-6">
         <div className={`p-6 rounded-2xl ${isDark ? 'bg-slate-800/50 border-slate-700/50' : 'bg-white border-slate-100'} border`}>
           <h3 className={`font-bold mb-4 ${isDark ? 'text-white' : 'text-slate-800'}`}>پرفروش‌ترین محصولات</h3>
@@ -1336,6 +1527,55 @@ function ReportsTab({ analytics, isDark }: any) {
               <Legend />
             </PieChart>
           </ResponsiveContainer>
+        </div>
+      </div>
+
+      {/* Detailed Tables */}
+      <div className="grid md:grid-cols-2 gap-6">
+        <div className={`p-6 rounded-2xl ${isDark ? 'bg-slate-800/50 border-slate-700/50' : 'bg-white border-slate-100'} border`}>
+          <h3 className={`font-bold mb-4 ${isDark ? 'text-white' : 'text-slate-800'}`}>جزئیات پرفروش‌ترین محصولات</h3>
+          <div className="space-y-3">
+            {analytics.topProducts.map((product: any, idx: number) => (
+              <div key={idx} className={`flex items-center justify-between p-3 rounded-xl ${isDark ? 'bg-slate-700/30' : 'bg-slate-50'}`}>
+                <div className="flex items-center gap-3">
+                  <span className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold ${
+                    idx === 0 ? 'bg-amber-100 text-amber-700' :
+                    idx === 1 ? 'bg-slate-100 text-slate-600' :
+                    'bg-orange-50 text-orange-600'
+                  }`}>{idx + 1}</span>
+                  <span className={`text-sm ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>{product.name}</span>
+                </div>
+                <div className="text-left">
+                  <p className="text-sm font-bold text-green-600">{product.count}x</p>
+                  <p className="text-xs text-slate-500">فروش</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className={`p-6 rounded-2xl ${isDark ? 'bg-slate-800/50 border-slate-700/50' : 'bg-white border-slate-100'} border`}>
+          <h3 className={`font-bold mb-4 ${isDark ? 'text-white' : 'text-slate-800'}`}>وضعیت سفارشات</h3>
+          <div className="space-y-3">
+            {analytics.ordersByStatus.map((status: any, idx: number) => {
+              const colors = ['#eab308', '#3b82f6', '#a855f7', '#06b6d4', '#22c55e', '#ef4444'];
+              const percentage = (status.count / analytics.totalOrders) * 100;
+              return (
+                <div key={idx} className="space-y-1">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className={isDark ? 'text-slate-300' : 'text-slate-700'}>{status.status}</span>
+                    <span className="font-bold">{status.count} ({percentage.toFixed(1)}%)</span>
+                  </div>
+                  <div className={`w-full h-2 rounded-full ${isDark ? 'bg-slate-700' : 'bg-slate-200'}`}>
+                    <div
+                      className="h-full rounded-full transition-all"
+                      style={{ width: `${percentage}%`, backgroundColor: colors[idx % 6] }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
     </div>
