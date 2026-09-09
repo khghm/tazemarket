@@ -539,9 +539,35 @@ function ProductsTab({ products, allProducts, searchQuery, setSearchQuery, categ
           </select>
         </div>
         <div className="flex items-center gap-2">
-          <button className={`px-4 py-2.5 rounded-xl text-sm font-medium ${isDark ? 'bg-slate-800 hover:bg-slate-700 text-slate-300' : 'bg-white hover:bg-slate-50 text-slate-700'} border ${isDark ? 'border-slate-700' : 'border-slate-200'} flex items-center gap-2`}>
+          <button onClick={() => {
+            const csvContent = [
+              ['شناسه', 'نام محصول', 'برند', 'دسته‌بندی', 'قیمت', 'قیمت قبل از تخفیف', 'تخفیف', 'واحد', 'موجودی', 'توضیحات'].join(','),
+              ...products.map((p: Product) => [
+                p.id,
+                `"${p.name}"`,
+                `"${p.brand}"`,
+                `"${categories.find(c => c.id === p.category)?.name || p.category}"`,
+                p.price,
+                p.originalPrice || '',
+                p.discount || '',
+                `"${p.unit}"`,
+                p.inStock ? 'موجود' : 'ناموجود',
+                `"${(p.description || '').replace(/"/g, '""')}"`
+              ].join(','))
+            ].join('\n');
+            
+            const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `products-${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+          }} className={`px-4 py-2.5 rounded-xl text-sm font-medium ${isDark ? 'bg-slate-800 hover:bg-slate-700 text-slate-300' : 'bg-white hover:bg-slate-50 text-slate-700'} border ${isDark ? 'border-slate-700' : 'border-slate-200'} flex items-center gap-2`}>
             <Download size={16} />
-            <span className="hidden sm:inline">خروجی</span>
+            <span className="hidden sm:inline">خروجی CSV</span>
           </button>
           <button onClick={onAdd} className="btn-primary">
             <Plus size={16} />
@@ -613,6 +639,30 @@ function ProductForm({ product, onSave, onCancel, isDark }: any) {
     name: '', category: 'staples', subcategory: '', price: 0, originalPrice: 0, discount: 0,
     unit: 'عدد', image: '', brand: '', inStock: true, description: '',
   });
+  const [imagePreview, setImagePreview] = useState<string>(product?.image || '');
+  const [imageMode, setImageMode] = useState<'upload' | 'url'>(product?.image && !product.image.startsWith('data:') ? 'url' : 'upload');
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        alert('حجم تصویر نباید بیشتر از ۵ مگابایت باشد');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64 = reader.result as string;
+        setForm({ ...form, image: base64 });
+        setImagePreview(base64);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleImageUrl = (url: string) => {
+    setForm({ ...form, image: url });
+    setImagePreview(url);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -652,9 +702,94 @@ function ProductForm({ product, onSave, onCancel, isDark }: any) {
           <label className={`block text-sm font-medium mb-1.5 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>تخفیف (%)</label>
           <input type="number" value={form.discount || 0} onChange={(e) => setForm({ ...form, discount: Number(e.target.value) })} className={`w-full px-4 py-2.5 rounded-xl border ${isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200'} outline-none focus:border-green-500`} />
         </div>
-        <div>
-          <label className={`block text-sm font-medium mb-1.5 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>لینک تصویر</label>
-          <input type="url" value={form.image || ''} onChange={(e) => setForm({ ...form, image: e.target.value })} className={`w-full px-4 py-2.5 rounded-xl border ${isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200'} outline-none focus:border-green-500`} placeholder="https://..." />
+        <div className="md:col-span-2">
+          <label className={`block text-sm font-medium mb-1.5 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>تصویر محصول</label>
+          
+          {/* Tab Switcher */}
+          <div className={`flex items-center gap-1 p-1 rounded-xl mb-3 ${isDark ? 'bg-slate-800' : 'bg-slate-100'}`}>
+            <button
+              type="button"
+              onClick={() => setImageMode('upload')}
+              className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                imageMode === 'upload'
+                  ? 'bg-green-600 text-white shadow-sm'
+                  : isDark ? 'text-slate-400 hover:text-white' : 'text-slate-600 hover:text-slate-800'
+              }`}
+            >
+              <Upload size={16} />
+              <span>بارگذاری از کامپیوتر</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setImageMode('url')}
+              className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                imageMode === 'url'
+                  ? 'bg-green-600 text-white shadow-sm'
+                  : isDark ? 'text-slate-400 hover:text-white' : 'text-slate-600 hover:text-slate-800'
+              }`}
+            >
+              <ExternalLink size={16} />
+              <span>لینک تصویر</span>
+            </button>
+          </div>
+
+          {/* Upload Area */}
+          {imageMode === 'upload' ? (
+            <div className={`relative border-2 border-dashed rounded-xl p-6 text-center transition-all ${
+              isDark ? 'border-slate-700 hover:border-green-500 bg-slate-800/50' : 'border-slate-300 hover:border-green-500 bg-slate-50'
+            }`}>
+              {imagePreview ? (
+                <div className="space-y-3">
+                  <div className="relative inline-block">
+                    <img src={imagePreview} alt="پیش‌نمایش" className="w-32 h-32 object-cover rounded-xl mx-auto" />
+                    <button
+                      type="button"
+                      onClick={() => { setForm({ ...form, image: '' }); setImagePreview(''); }}
+                      className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                  <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>تصویر با موفقیت بارگذاری شد</p>
+                </div>
+              ) : (
+                <label className="cursor-pointer block">
+                  <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+                  <div className="space-y-3">
+                    <div className={`w-16 h-16 mx-auto rounded-2xl flex items-center justify-center ${isDark ? 'bg-slate-700' : 'bg-white'}`}>
+                      <Image size={28} className="text-green-600" />
+                    </div>
+                    <div>
+                      <p className={`font-medium text-sm ${isDark ? 'text-white' : 'text-slate-800'}`}>
+                        کلیک کنید یا تصویر را بکشید و رها کنید
+                      </p>
+                      <p className={`text-xs mt-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                        PNG, JPG, WEBP (حداکثر ۵ مگابایت)
+                      </p>
+                    </div>
+                  </div>
+                </label>
+              )}
+            </div>
+          ) : (
+            <input
+              type="url"
+              value={form.image && !form.image.startsWith('data:') ? form.image : ''}
+              onChange={(e) => handleImageUrl(e.target.value)}
+              className={`w-full px-4 py-2.5 rounded-xl border ${isDark ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200'} outline-none focus:border-green-500`}
+              placeholder="https://example.com/image.jpg"
+            />
+          )}
+
+          {/* Image Preview (for URL mode) */}
+          {imageMode === 'url' && imagePreview && (
+            <div className="mt-3 flex items-center gap-3">
+              <img src={imagePreview} alt="پیش‌نمایش" className="w-16 h-16 object-cover rounded-xl border border-slate-200 dark:border-slate-700" />
+              <div className="flex-1">
+                <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'} truncate`}>{form.image}</p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
       <div>
