@@ -27,21 +27,20 @@ function AppContent() {
     <div className={`min-h-screen transition-colors duration-300 ${isDark ? 'bg-gray-900 text-gray-100' : 'bg-gray-50 text-gray-900'}`}>
       {!isAdminRoute && <Header />}
       <main className={isAdminRoute ? '' : 'pb-20 md:pb-6'}>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/category/:categoryId" element={<CategoryPage />} />
-          <Route path="/product/:productId" element={<ProductPage />} />
-          <Route path="/cart" element={<CartPage />} />
-          <Route path="/checkout" element={<CheckoutPage />} />
-          <Route path="/tracking" element={<TrackingPage />} />
-          <Route path="/profile" element={<ProfilePage />} />
-          <Route path="/admin/*" element={<AdminPage />} />
-          <Route path="/search" element={<SearchPage />} />
-          <Route path="/flash-deals" element={<Home />} />
-          <Route path="/popular" element={<Home />} />
-          <Route path="/discounts" element={<Home />} />
-        </Routes>
-      </main>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/category/:id" element={<CategoryPage />} />
+            <Route path="/product/:id" element={<ProductPage />} />
+            <Route path="/cart" element={<CartPage />} />
+            <Route path="/checkout" element={<CheckoutPage />} />
+            <Route path="/tracking" element={<TrackingPage />} />
+            <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/admin/*" element={<AdminPage />} />
+            <Route path="/search" element={<SearchPage />} />
+            <Route path="/flash-deals" element={<Home />} />
+            <Route path="/popular" element={<Home />} />
+            <Route path="/discounts" element={<Home />} />
+          </Routes>      </main>
       {!isAdminRoute && <Footer />}
 
       {!isAdminRoute && (
