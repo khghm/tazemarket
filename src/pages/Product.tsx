@@ -1,121 +1,136 @@
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ChevronLeft, Plus, Minus, ShoppingCart, Heart, Star, Truck, Shield, ChevronDown, ChevronUp } from 'lucide-react';
+import { ArrowRight, Star, Heart, ShoppingCart, Plus, Minus, Truck, Shield, Clock, ChevronDown, ChevronUp } from 'lucide-react';
 import { products, reviews } from '../data/products';
 import { useCartStore } from '../store/cartStore';
 import { useThemeStore } from '../store/themeStore';
+import ProductCard from '../components/ProductCard';
 
 export default function ProductPage() {
-  const { productId } = useParams();
+  const { id } = useParams();
   const isDark = useThemeStore((s) => s.isDark);
   const { addItem, items, updateQuantity } = useCartStore();
   const [quantity, setQuantity] = useState(1);
-  const [isWishlisted, setIsWishlisted] = useState(false);
+  const [selectedUnit, setSelectedUnit] = useState('کیلوگرم');
   const [showNutrition, setShowNutrition] = useState(false);
   const [showReviews, setShowReviews] = useState(true);
-  const [reviewSort, setReviewSort] = useState<'helpful' | 'newest'>('helpful');
+  const [isWishlisted, setIsWishlisted] = useState(false);
+  const [imgError, setImgError] = useState(false);
 
-  const product = products.find((p) => p.id === productId);
-  const productReviews = reviews.filter((r) => r.productId === productId);
-  const cartItem = items.find((item) => item.product.id === productId);
-  const cartQuantity = cartItem?.quantity || 0;
-
+  const product = products.find((p) => p.id === id);
   if (!product) {
     return (
-      <div className="max-w-7xl mx-auto px-4 py-20 text-center">
-        <span className="text-6xl block mb-4">😕</span>
-        <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-800'}`}>محصول یافت نشد</h2>
-        <Link to="/" className="mt-4 inline-block text-green-600 hover:text-green-700">بازگشت به صفحه اصلی</Link>
+      <div className="max-w-7xl mx-auto px-4 py-16 text-center">
+        <p className="text-4xl mb-4">😕</p>
+        <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>محصول یافت نشد</h2>
+        <Link to="/" className="text-green-600 mt-4 inline-block">بازگشت به صفحه اصلی</Link>
       </div>
     );
   }
 
-  const sortedReviews = [...productReviews].sort((a, b) =>
-    reviewSort === 'helpful' ? b.helpful - a.helpful : b.date.localeCompare(a.date)
-  );
+  const productReviews = reviews.filter((r) => r.productId === id);
+  const relatedProducts = products.filter((p) => p.category === product.category && p.id !== product.id).slice(0, 4);
+  const cartItem = items.find((item) => item.product.id === product.id);
+  const cartQuantity = cartItem?.quantity || 0;
 
   const handleAddToCart = () => {
-    addItem(product, quantity);
+    for (let i = 0; i < quantity; i++) {
+      addItem(product);
+    }
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-6">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
       {/* Breadcrumb */}
-      <div className={`flex items-center gap-2 text-sm mb-6 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-        <Link to="/" className="hover:text-green-600">خانه</Link>
-        <ChevronLeft size={14} />
-        <Link to={`/category/${product.category}`} className="hover:text-green-600">{product.category}</Link>
-        <ChevronLeft size={14} />
-        <span className={`truncate max-w-[200px] ${isDark ? 'text-white' : 'text-gray-800'}`}>{product.name}</span>
-      </div>
+      <nav className="flex items-center gap-2 text-sm mb-6 overflow-x-auto no-scrollbar">
+        <Link to="/" className="text-slate-500 hover:text-green-600 whitespace-nowrap">خانه</Link>
+        <ChevronDown size={14} className="text-slate-400 rotate-[-90deg] shrink-0" />
+        <Link to={`/category/${product.category}`} className="text-slate-500 hover:text-green-600 whitespace-nowrap">{product.category}</Link>
+        <ChevronDown size={14} className="text-slate-400 rotate-[-90deg] shrink-0" />
+        <span className={`font-medium whitespace-nowrap ${isDark ? 'text-white' : 'text-slate-800'}`}>{product.name}</span>
+      </nav>
 
       <div className="grid lg:grid-cols-2 gap-8">
         {/* Image Section */}
-        <div className={`rounded-3xl overflow-hidden ${isDark ? 'bg-gray-800' : 'bg-white'} border ${isDark ? 'border-gray-700' : 'border-gray-100'}`}>
-          <div className={`aspect-square flex items-center justify-center p-12 ${isDark ? 'bg-gray-700/50' : 'bg-gray-50'}`}>
-            <span className="text-[120px] md:text-[180px] hover:scale-110 transition-transform duration-500 cursor-zoom-in">
-              {product.image.includes('🍎') ? '🍎' : product.image.includes('🍌') ? '🍌' : product.image.includes('🍅') ? '🍅' : product.image.includes('🥒') ? '🥒' : product.image.includes('🍊') ? '🍊' : product.image.includes('🥬') ? '🥬' : product.image.includes('🥕') ? '🥕' : product.image.includes('🍋') ? '🍋' : product.image.includes('🥛') ? '🥛' : product.image.includes('🫙') ? '🫙' : product.image.includes('🧀') ? '🧀' : product.image.includes('🧈') ? '🧈' : product.image.includes('🥚') ? '🥚' : product.image.includes('🍗') ? '🍗' : product.image.includes('🥩') ? '🥩' : product.image.includes('🐟') ? '🐟' : product.image.includes('🌭') ? '🌭' : product.image.includes('💧') ? '💧' : product.image.includes('🥤') ? '🥤' : product.image.includes('🧃') ? '🧃' : product.image.includes('🍵') ? '🍵' : product.image.includes('🍚') ? '🍚' : product.image.includes('🫒') ? '🫒' : product.image.includes('🍬') ? '🍬' : product.image.includes('🧴') ? '🧴' : product.image.includes('🧻') ? '🧻' : product.image.includes('🪥') ? '🪥' : product.image.includes('👶') ? '👶' : product.image.includes('🍼') ? '🍼' : product.image.includes('🍝') ? '🍝' : product.image.includes('🍿') ? '🍿' : '📦'}
-            </span>
+        <div className="space-y-4">
+          <div className={`aspect-square rounded-3xl overflow-hidden ${isDark ? 'bg-slate-800' : 'bg-slate-50'} relative`}>
+            {product.discount && product.discount > 0 && (
+              <span className="absolute top-4 right-4 badge-discount text-sm px-4 py-1.5 z-10">{product.discount}% تخفیف</span>
+            )}
+            {!imgError ? (
+              <img
+                src={product.image}
+                alt={product.name}
+                className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+                onError={() => setImgError(true)}
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <span className="text-6xl">📦</span>
+              </div>
+            )}
           </div>
-          {product.discount && (
-            <div className="absolute top-4 right-4 bg-red-500 text-white font-bold px-3 py-1.5 rounded-xl">
-              {product.discount}% تخفیف
-            </div>
-          )}
         </div>
 
         {/* Info Section */}
         <div className="space-y-6">
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <span className={`text-sm px-2 py-0.5 rounded ${isDark ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-600'}`}>{product.brand}</span>
-              {product.inStock ? (
-                <span className="text-sm text-green-600 flex items-center gap-1"><Shield size={14} /> موجود</span>
-              ) : (
-                <span className="text-sm text-red-500">ناموجود</span>
-              )}
+          {/* Brand & Rating */}
+          <div className="flex items-center gap-3">
+            <span className={`px-3 py-1 rounded-full text-sm font-medium ${isDark ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>
+              {product.brand}
+            </span>
+            <div className="flex items-center gap-1">
+              {[...Array(5)].map((_, i) => (
+                <Star key={i} size={16} className={i < Math.floor(product.rating) ? 'fill-amber-400 text-amber-400' : 'text-slate-300'} />
+              ))}
+              <span className="text-sm text-slate-500 mr-1">({product.reviewCount} نظر)</span>
             </div>
-            <h1 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-800'}`}>{product.name}</h1>
-            <p className={`mt-2 text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{product.description}</p>
           </div>
 
-          {/* Rating */}
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <Star key={star} size={18} className={star <= product.rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'} />
-              ))}
-            </div>
-            <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-              {product.rating} از ۵ ({product.reviewCount} نظر)
-            </span>
-          </div>
+          {/* Title */}
+          <h1 className={`text-2xl sm:text-3xl font-bold leading-tight ${isDark ? 'text-white' : 'text-slate-800'}`}>
+            {product.name}
+          </h1>
+
+          {/* Description */}
+          <p className={`text-sm leading-7 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+            {product.description}
+          </p>
 
           {/* Price */}
-          <div className={`p-4 rounded-2xl ${isDark ? 'bg-gray-800' : 'bg-green-50'} border ${isDark ? 'border-gray-700' : 'border-green-100'}`}>
-            {product.originalPrice && (
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-sm text-gray-400 line-through">{product.originalPrice.toLocaleString()} تومان</span>
-                <span className="text-xs bg-red-500 text-white px-2 py-0.5 rounded-full">{product.discount}%</span>
+          <div className={`p-5 rounded-2xl ${isDark ? 'bg-slate-800/50 border-slate-700/50' : 'bg-green-50 border-green-100'} border`}>
+            <div className="flex items-end justify-between">
+              <div>
+                {product.originalPrice && (
+                  <span className="price-original block text-lg">{product.originalPrice.toLocaleString()} تومان</span>
+                )}
+                <div className="flex items-baseline gap-2 mt-1">
+                  <span className={`text-3xl font-black ${isDark ? 'text-green-400' : 'text-green-700'}`}>
+                    {product.price.toLocaleString()}
+                  </span>
+                  <span className="text-sm text-slate-500">تومان</span>
+                </div>
               </div>
-            )}
-            <div className="flex items-baseline gap-1">
-              <span className={`text-3xl font-bold ${isDark ? 'text-green-400' : 'text-green-700'}`}>
-                {product.price.toLocaleString()}
-              </span>
-              <span className="text-sm text-gray-500">تومان / {product.unit}</span>
+              {product.discount && (
+                <span className="text-sm font-bold text-green-600 bg-green-100 dark:bg-green-900/30 px-3 py-1 rounded-lg">
+                  {((product.originalPrice || product.price) - product.price).toLocaleString()} تومان تخفیف
+                </span>
+              )}
             </div>
           </div>
 
           {/* Unit Selection */}
           <div>
-            <label className={`text-sm font-medium block mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>واحد:</label>
+            <label className={`text-sm font-medium mb-2 block ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>انتخاب واحد</label>
             <div className="flex items-center gap-2">
               {['کیلوگرم', 'گرم', 'عدد'].map((unit) => (
                 <button
                   key={unit}
-                  className={`px-4 py-2 rounded-xl text-sm border transition-colors ${
-                    isDark ? 'border-gray-700 hover:bg-gray-700 text-gray-300' : 'border-gray-200 hover:bg-green-50 text-gray-700'
+                  onClick={() => setSelectedUnit(unit)}
+                  className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                    selectedUnit === unit
+                      ? 'bg-green-600 text-white shadow-lg shadow-green-600/20'
+                      : isDark ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                   }`}
                 >
                   {unit}
@@ -125,136 +140,134 @@ export default function ProductPage() {
           </div>
 
           {/* Quantity & Add to Cart */}
-          {product.inStock && (
-            <div className="flex items-center gap-4">
-              <div className={`flex items-center gap-3 border rounded-xl px-4 py-2 ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
-                <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="p-1 hover:text-green-600"><Minus size={18} /></button>
-                <span className={`font-bold min-w-[30px] text-center ${isDark ? 'text-white' : 'text-gray-800'}`}>{quantity}</span>
-                <button onClick={() => setQuantity(quantity + 1)} className="p-1 hover:text-green-600"><Plus size={18} /></button>
-              </div>
+          <div className="flex items-center gap-4">
+            <div className={`flex items-center rounded-xl border ${isDark ? 'border-slate-600 bg-slate-800' : 'border-slate-200 bg-white'}`}>
               <button
-                onClick={handleAddToCart}
-                className="flex-1 flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white font-bold py-3.5 rounded-xl transition-colors"
+                onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                className="w-12 h-12 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-700 rounded-r-xl transition-colors"
               >
-                <ShoppingCart size={20} />
-                افزودن به سبد خرید
+                <Minus size={16} />
               </button>
+              <span className={`w-12 text-center font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>{quantity}</span>
               <button
-                onClick={() => setIsWishlisted(!isWishlisted)}
-                className={`p-3.5 rounded-xl border transition-colors ${
-                  isWishlisted ? 'bg-red-50 border-red-200 text-red-500' : isDark ? 'border-gray-700 text-gray-400 hover:bg-gray-800' : 'border-gray-200 text-gray-400 hover:bg-gray-50'
-                }`}
+                onClick={() => setQuantity(quantity + 1)}
+                className="w-12 h-12 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-700 rounded-l-xl transition-colors"
               >
-                <Heart size={20} fill={isWishlisted ? 'currentColor' : 'none'} />
+                <Plus size={16} />
               </button>
             </div>
-          )}
 
-          {!product.inStock && (
-            <button className={`w-full py-3.5 rounded-xl border-2 border-dashed ${isDark ? 'border-gray-600 text-gray-400' : 'border-gray-300 text-gray-500'}`}>
-              🔔 موجودی اطلاع بده
+            <button
+              onClick={handleAddToCart}
+              className="flex-1 btn-primary h-12"
+            >
+              <ShoppingCart size={18} />
+              <span>افزودن به سبد خرید</span>
             </button>
-          )}
 
-          {/* Delivery Info */}
-          <div className={`grid grid-cols-2 gap-3 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-            <div className={`flex items-center gap-2 p-3 rounded-xl ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
-              <Truck size={18} className="text-green-600" />
-              <div>
-                <p className="text-xs font-medium">ارسال اکسپرس</p>
-                <p className="text-xs text-gray-500">کمتر از ۱ ساعت</p>
-              </div>
-            </div>
-            <div className={`flex items-center gap-2 p-3 rounded-xl ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
-              <Shield size={18} className="text-blue-600" />
-              <div>
-                <p className="text-xs font-medium">ضمانت تازگی</p>
-                <p className="text-xs text-gray-500">بازگشت وجه</p>
-              </div>
-            </div>
+            <button
+              onClick={() => setIsWishlisted(!isWishlisted)}
+              className={`w-12 h-12 rounded-xl border flex items-center justify-center transition-all ${
+                isWishlisted
+                  ? 'bg-red-50 border-red-200 text-red-500'
+                  : isDark ? 'border-slate-600 hover:bg-slate-700 text-slate-400' : 'border-slate-200 hover:bg-slate-50 text-slate-500'
+              }`}
+            >
+              <Heart size={18} fill={isWishlisted ? 'currentColor' : 'none'} />
+            </button>
           </div>
 
-          {/* Nutrition Info */}
-          {product.nutritionInfo && (
-            <div className={`rounded-2xl border overflow-hidden ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
-              <button
-                onClick={() => setShowNutrition(!showNutrition)}
-                className={`w-full flex items-center justify-between p-4 ${isDark ? 'hover:bg-gray-800' : 'hover:bg-gray-50'}`}
-              >
-                <span className="font-medium text-sm">اطلاعات تغذیه‌ای</span>
-                {showNutrition ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-              </button>
-              {showNutrition && (
-                <div className={`p-4 pt-0 space-y-2 ${isDark ? 'border-t border-gray-700' : 'border-t border-gray-200'}`}>
-                  {product.nutritionInfo.map((info, i) => (
-                    <div key={i} className="flex items-center justify-between text-sm">
-                      <span className={isDark ? 'text-gray-400' : 'text-gray-600'}>{info.name}</span>
-                      <span className="font-medium">{info.value}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Reviews Section */}
-      <div className={`mt-8 p-6 rounded-2xl ${isDark ? 'bg-gray-800' : 'bg-white'} border ${isDark ? 'border-gray-700' : 'border-gray-100'}`}>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-gray-800'}`}>
-            نظرات کاربران ({productReviews.length})
-          </h2>
-          <select
-            value={reviewSort}
-            onChange={(e) => setReviewSort(e.target.value as 'helpful' | 'newest')}
-            className={`px-3 py-1.5 rounded-lg text-sm border ${isDark ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}
-          >
-            <option value="helpful">مفیدترین</option>
-            <option value="newest">جدیدترین</option>
-          </select>
-        </div>
-
-        {sortedReviews.length > 0 ? (
-          <div className="space-y-4">
-            {sortedReviews.map((review) => (
-              <div key={review.id} className={`p-4 rounded-xl ${isDark ? 'bg-gray-700/50' : 'bg-gray-50'}`}>
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 bg-green-100 text-green-700 rounded-full flex items-center justify-center text-sm font-bold">
-                      {review.userName[0]}
-                    </div>
-                    <span className={`text-sm font-medium ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>{review.userName}</span>
-                  </div>
-                  <span className="text-xs text-gray-500">{review.date}</span>
-                </div>
-                <div className="flex items-center gap-1 mb-2">
-                  {[1, 2, 3, 4, 5].map((s) => (
-                    <Star key={s} size={12} className={s <= review.rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'} />
-                  ))}
-                </div>
-                <p className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>{review.text}</p>
-                <div className="mt-2 flex items-center gap-1 text-xs text-gray-500">
-                  <span>👍 {review.helpful} نفر مفید دانستند</span>
-                </div>
+          {/* Features */}
+          <div className="grid grid-cols-3 gap-3">
+            {[
+              { icon: <Truck size={18} />, label: 'ارسال سریع', desc: 'زیر ۱ ساعت' },
+              { icon: <Shield size={18} />, label: 'ضمانت تازگی', desc: '۱۰۰٪ تازه' },
+              { icon: <Clock size={18} />, label: 'پشتیبانی', desc: '۲۴ ساعته' },
+            ].map((feat, idx) => (
+              <div key={idx} className={`p-3 rounded-xl text-center ${isDark ? 'bg-slate-800/50 border-slate-700/50' : 'bg-slate-50 border-slate-100'} border`}>
+                <div className="text-green-600 mb-1 flex justify-center">{feat.icon}</div>
+                <p className={`text-xs font-medium ${isDark ? 'text-white' : 'text-slate-800'}`}>{feat.label}</p>
+                <p className="text-[10px] text-slate-500">{feat.desc}</p>
               </div>
             ))}
           </div>
-        ) : (
-          <p className="text-center text-gray-500 py-8">هنوز نظری ثبت نشده است</p>
+        </div>
+      </div>
+
+      {/* Nutrition Info */}
+      {product.nutritionInfo && (
+        <div className={`mt-8 rounded-2xl overflow-hidden ${isDark ? 'bg-slate-800/50 border-slate-700/50' : 'bg-white border-slate-100'} border`}>
+          <button
+            onClick={() => setShowNutrition(!showNutrition)}
+            className={`w-full p-5 flex items-center justify-between ${isDark ? 'hover:bg-slate-700/30' : 'hover:bg-slate-50'} transition-colors`}
+          >
+            <h3 className={`font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>اطلاعات تغذیه‌ای</h3>
+            {showNutrition ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+          </button>
+          {showNutrition && (
+            <div className={`px-5 pb-5 border-t ${isDark ? 'border-slate-700' : 'border-slate-200'}`}>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-4">
+                {product.nutritionInfo.map((info, idx) => (
+                  <div key={idx} className={`p-4 rounded-xl text-center ${isDark ? 'bg-slate-700/30' : 'bg-slate-50'}`}>
+                    <p className="text-lg font-bold text-green-600">{info.value}</p>
+                    <p className="text-xs text-slate-500 mt-1">{info.name}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Reviews */}
+      <div className={`mt-6 rounded-2xl overflow-hidden ${isDark ? 'bg-slate-800/50 border-slate-700/50' : 'bg-white border-slate-100'} border`}>
+        <button
+          onClick={() => setShowReviews(!showReviews)}
+          className={`w-full p-5 flex items-center justify-between ${isDark ? 'hover:bg-slate-700/30' : 'hover:bg-slate-50'} transition-colors`}
+        >
+          <h3 className={`font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>نظرات کاربران ({productReviews.length})</h3>
+          {showReviews ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+        </button>
+        {showReviews && (
+          <div className={`px-5 pb-5 border-t ${isDark ? 'border-slate-700' : 'border-slate-200'}`}>
+            <div className="space-y-4 mt-4">
+              {productReviews.length > 0 ? productReviews.map((review) => (
+                <div key={review.id} className={`p-4 rounded-xl ${isDark ? 'bg-slate-700/30' : 'bg-slate-50'}`}>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center text-white text-xs font-bold">
+                        {review.userName[0]}
+                      </div>
+                      <span className={`text-sm font-medium ${isDark ? 'text-white' : 'text-slate-800'}`}>{review.userName}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      {[...Array(5)].map((_, i) => (
+                        <Star key={i} size={12} className={i < review.rating ? 'fill-amber-400 text-amber-400' : 'text-slate-300'} />
+                      ))}
+                    </div>
+                  </div>
+                  <p className={`text-sm ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>{review.text}</p>
+                  <div className="flex items-center justify-between mt-3">
+                    <span className="text-xs text-slate-500">{review.date}</span>
+                    <span className="text-xs text-slate-500">{review.helpful} نفر مفید دانستند</span>
+                  </div>
+                </div>
+              )) : (
+                <p className="text-center text-slate-500 py-8">هنوز نظری ثبت نشده است</p>
+              )}
+            </div>
+          </div>
         )}
       </div>
 
-      {/* Cart quantity indicator */}
-      {cartQuantity > 0 && (
-        <div className={`fixed bottom-24 left-4 right-4 md:bottom-6 md:left-auto md:right-6 md:w-80 p-4 rounded-2xl shadow-xl border z-40 ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className={`text-sm font-medium ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>{cartQuantity} عدد در سبد خرید</p>
-            </div>
-            <Link to="/cart" className="bg-green-600 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-green-700">
-              مشاهده سبد
-            </Link>
+      {/* Related Products */}
+      {relatedProducts.length > 0 && (
+        <div className="mt-8">
+          <h3 className={`text-xl font-bold mb-4 ${isDark ? 'text-white' : 'text-slate-800'}`}>محصولات مرتبط</h3>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            {relatedProducts.map((p) => (
+              <ProductCard key={p.id} product={p} />
+            ))}
           </div>
         </div>
       )}

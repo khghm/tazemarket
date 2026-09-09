@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, ShoppingCart, Moon, Sun, Menu, X, User, MapPin, Clock, Zap } from 'lucide-react';
+import { Search, ShoppingCart, Moon, Sun, Menu, X, User, MapPin, Clock, Zap, Shield, Settings } from 'lucide-react';
 import { useCartStore } from '../store/cartStore';
 import { useThemeStore } from '../store/themeStore';
 import { products } from '../data/products';
@@ -17,7 +17,6 @@ export default function Header() {
   const toggleTheme = useThemeStore((s) => s.toggleTheme);
   const searchRef = useRef<HTMLDivElement>(null);
 
-  // Flash deal timer
   const [timeLeft, setTimeLeft] = useState('');
   useEffect(() => {
     const interval = setInterval(() => {
@@ -40,7 +39,7 @@ export default function Header() {
       const query = searchQuery.toLowerCase();
       const results = products.filter(
         (p) => p.name.includes(query) || p.brand.toLowerCase().includes(query) || p.category.includes(query)
-      ).slice(0, 6);
+      ).slice(0, 5);
       setSuggestions(results);
     } else {
       setSuggestions([]);
@@ -66,78 +65,84 @@ export default function Header() {
   };
 
   return (
-    <header className={`sticky top-0 z-50 shadow-sm ${isDark ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-100'} border-b`}>
+    <header className={`sticky top-0 z-50 transition-all ${isDark ? 'bg-slate-900/95 border-slate-800' : 'bg-white/95 border-slate-100'} border-b backdrop-blur-xl`}>
       {/* Flash Deal Banner */}
       {timeLeft && (
-        <div className="bg-gradient-to-l from-orange-500 to-red-500 text-white text-center py-1.5 text-sm font-medium">
-          <div className="flex items-center justify-center gap-2">
+        <div className="bg-gradient-to-l from-orange-500 via-red-500 to-orange-600 text-white text-center py-2 text-sm font-medium relative overflow-hidden">
+          <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg%20width%3D%2220%22%20height%3D%2220%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M0%200h20v20H0z%22%20fill%3D%22none%22%2F%3E%3Cpath%20d%3D%22M10%200l5%2010-5%2010L5%2010z%22%20fill%3D%22rgba(255%2C255%2C255%2C0.05)%22%2F%3E%3C%2Fsvg%3E')] opacity-30" />
+          <div className="relative flex items-center justify-center gap-3">
             <Zap size={14} className="animate-pulse" />
-            <span>پیشنهاد لحظه‌ای</span>
-            <span className="bg-white/20 px-2 py-0.5 rounded font-mono text-xs">{timeLeft}</span>
+            <span className="font-bold">پیشنهاد شگفت‌انگیز</span>
+            <span className="bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full font-mono text-xs tracking-wider">{timeLeft}</span>
             <Zap size={14} className="animate-pulse" />
           </div>
         </div>
       )}
 
-      <div className="max-w-7xl mx-auto px-4 py-3">
-        <div className="flex items-center gap-3">
-          {/* Mobile Menu Button */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3">
+        <div className="flex items-center gap-4">
+          {/* Mobile Menu */}
           <button
             onClick={() => setShowMobileMenu(!showMobileMenu)}
-            className="lg:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
+            className={`lg:hidden p-2.5 rounded-xl transition-colors ${isDark ? 'hover:bg-slate-800' : 'hover:bg-slate-100'}`}
           >
-            {showMobileMenu ? <X size={24} /> : <Menu size={24} />}
+            {showMobileMenu ? <X size={22} /> : <Menu size={22} />}
           </button>
 
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 shrink-0">
-            <div className="w-9 h-9 bg-gradient-to-br from-green-600 to-green-700 rounded-xl flex items-center justify-center">
-              <span className="text-white text-lg">🛒</span>
+          <Link to="/" className="flex items-center gap-3 shrink-0">
+            <div className="w-11 h-11 gradient-primary rounded-2xl flex items-center justify-center shadow-lg shadow-green-600/20">
+              <span className="text-white font-black text-lg">ت</span>
             </div>
-            <span className="hidden sm:block font-bold text-lg text-green-700 dark:text-green-400">تازه‌مارکت</span>
+            <div className="hidden sm:block">
+              <h1 className={`font-extrabold text-lg leading-tight ${isDark ? 'text-white' : 'text-slate-800'}`}>تازه‌مارکت</h1>
+              <p className="text-[10px] text-slate-400 -mt-0.5">سوپرمارکت آنلاین</p>
+            </div>
           </Link>
 
           {/* Location */}
-          <div className={`hidden md:flex items-center gap-1 text-sm px-3 py-1.5 rounded-lg ${isDark ? 'bg-gray-800 text-gray-300' : 'bg-gray-50 text-gray-600'}`}>
+          <div className={`hidden lg:flex items-center gap-2 px-4 py-2 rounded-xl ${isDark ? 'bg-slate-800/50 text-slate-300' : 'bg-slate-50 text-slate-600'}`}>
             <MapPin size={14} className="text-green-600" />
-            <span className="truncate max-w-[120px]">تهران، ولنجک</span>
+            <span className="text-sm">تهران، ولنجک</span>
           </div>
 
-          {/* Search Bar */}
+          {/* Search */}
           <div ref={searchRef} className="flex-1 relative">
             <form onSubmit={handleSearch}>
-              <div className={`flex items-center rounded-xl border ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'} focus-within:border-green-500 focus-within:ring-2 focus-within:ring-green-500/20 transition-all`}>
-                <Search size={18} className="mr-3 text-gray-400" />
+              <div className={`flex items-center rounded-2xl border-2 transition-all ${isDark ? 'bg-slate-800 border-slate-700 focus-within:border-green-500' : 'bg-slate-50 border-slate-200 focus-within:border-green-500'} focus-within:shadow-lg focus-within:shadow-green-500/10`}>
+                <Search size={18} className="mr-4 text-slate-400" />
                 <input
                   type="text"
-                  placeholder="جستجو در محصولات..."
+                  placeholder="جستجو در هزاران محصول..."
                   value={searchQuery}
                   onChange={(e) => { setSearchQuery(e.target.value); setShowSearch(true); }}
                   onFocus={() => setShowSearch(true)}
-                  className={`flex-1 py-2.5 bg-transparent outline-none text-sm ${isDark ? 'text-white placeholder-gray-500' : 'text-gray-800 placeholder-gray-400'}`}
+                  className={`flex-1 py-3 bg-transparent outline-none text-sm ${isDark ? 'text-white placeholder-slate-500' : 'text-slate-800 placeholder-slate-400'}`}
                 />
                 {searchQuery && (
-                  <button type="button" onClick={() => { setSearchQuery(''); setSuggestions([]); }} className="px-3 text-gray-400 hover:text-gray-600">
+                  <button type="button" onClick={() => { setSearchQuery(''); setSuggestions([]); }} className="px-4 text-slate-400 hover:text-slate-600">
                     <X size={16} />
                   </button>
                 )}
               </div>
             </form>
 
-            {/* Search Suggestions */}
+            {/* Suggestions */}
             {showSearch && suggestions.length > 0 && (
-              <div className={`absolute top-full mt-2 w-full rounded-xl shadow-xl border overflow-hidden z-50 ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+              <div className={`absolute top-full mt-2 w-full rounded-2xl shadow-2xl border overflow-hidden z-50 ${isDark ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-200'}`}>
                 {suggestions.map((product) => (
                   <Link
                     key={product.id}
                     to={`/product/${product.id}`}
                     onClick={() => { setShowSearch(false); setSearchQuery(''); }}
-                    className={`flex items-center gap-3 px-4 py-3 hover:${isDark ? 'bg-gray-700' : 'bg-gray-50'} transition-colors`}
+                    className={`flex items-center gap-4 px-4 py-3 transition-colors ${isDark ? 'hover:bg-slate-700' : 'hover:bg-slate-50'}`}
                   >
-                    <span className="text-2xl">{product.image.includes('svg') ? '📦' : ''}</span>
+                    <div className="w-12 h-12 rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-700">
+                      <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+                    </div>
                     <div className="flex-1">
-                      <p className="text-sm font-medium">{product.name}</p>
-                      <p className="text-xs text-gray-500">{product.brand} • {product.unit}</p>
+                      <p className={`text-sm font-medium ${isDark ? 'text-white' : 'text-slate-800'}`}>{product.name}</p>
+                      <p className="text-xs text-slate-500">{product.brand} • {product.unit}</p>
                     </div>
                     <span className="text-sm font-bold text-green-600">{product.price.toLocaleString()} ت</span>
                   </Link>
@@ -147,29 +152,37 @@ export default function Header() {
           </div>
 
           {/* Actions */}
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-2">
             <button
               onClick={toggleTheme}
-              className={`p-2.5 rounded-xl transition-colors ${isDark ? 'hover:bg-gray-800 text-yellow-400' : 'hover:bg-gray-100 text-gray-600'}`}
-              title={isDark ? 'حالت روز' : 'حالت شب'}
+              className={`p-2.5 rounded-xl transition-all ${isDark ? 'hover:bg-slate-800 text-amber-400' : 'hover:bg-slate-100 text-slate-600'}`}
             >
               {isDark ? <Sun size={20} /> : <Moon size={20} />}
             </button>
 
             <Link
               to="/profile"
-              className={`hidden sm:flex p-2.5 rounded-xl transition-colors ${isDark ? 'hover:bg-gray-800 text-gray-300' : 'hover:bg-gray-100 text-gray-600'}`}
+              className={`hidden sm:flex p-2.5 rounded-xl transition-colors ${isDark ? 'hover:bg-slate-800 text-slate-300' : 'hover:bg-slate-100 text-slate-600'}`}
             >
               <User size={20} />
             </Link>
 
+            {/* Admin Button */}
+            <Link
+              to="/admin"
+              className={`hidden md:flex p-2.5 rounded-xl transition-colors ${isDark ? 'hover:bg-slate-800 text-slate-400 hover:text-purple-400' : 'hover:bg-slate-100 text-slate-500 hover:text-purple-600'}`}
+              title="پنل مدیریت"
+            >
+              <Settings size={20} />
+            </Link>
+
             <Link
               to="/cart"
-              className="relative p-2.5 rounded-xl bg-green-600 hover:bg-green-700 text-white transition-colors"
+              className="relative p-2.5 rounded-xl gradient-primary text-white shadow-lg shadow-green-600/20 hover:shadow-green-600/40 transition-all hover:scale-105"
             >
               <ShoppingCart size={20} />
               {cartCount > 0 && (
-                <span className="absolute -top-1 -left-1 w-5 h-5 bg-orange-500 text-white text-xs font-bold rounded-full flex items-center justify-center animate-bounce-in">
+                <span className="absolute -top-1.5 -left-1.5 w-5 h-5 bg-orange-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center animate-bounce-in shadow-lg">
                   {cartCount}
                 </span>
               )}
@@ -177,31 +190,35 @@ export default function Header() {
           </div>
         </div>
 
-        {/* Delivery Time Info */}
-        <div className={`hidden lg:flex items-center gap-4 mt-2 text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-          <div className="flex items-center gap-1">
+        {/* Info Bar */}
+        <div className={`hidden lg:flex items-center gap-6 mt-3 text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+          <div className="flex items-center gap-1.5">
             <Clock size={12} className="text-green-600" />
-            <span>تحویل اکسپرس: کمتر از ۱ ساعت</span>
+            <span>تحویل اکسپرس زیر ۱ ساعت</span>
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1.5">
+            <Shield size={12} className="text-blue-600" />
+            <span>ضمانت تازگی و کیفیت</span>
+          </div>
+          <div className="flex items-center gap-1.5">
             <Zap size={12} className="text-orange-500" />
-            <span>ارسال رایگان برای خرید بالای ۳۰۰ هزار تومان</span>
+            <span>ارسال رایگان بالای ۳۰۰ هزار تومان</span>
           </div>
         </div>
       </div>
 
-      {/* Category Navigation */}
-      <div className={`border-t ${isDark ? 'border-gray-700' : 'border-gray-100'}`}>
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-2">
+      {/* Category Nav */}
+      <div className={`border-t ${isDark ? 'border-slate-800' : 'border-slate-100'}`}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-2.5">
             {categories.map((cat) => (
               <Link
                 key={cat.id}
                 to={`/category/${cat.id}`}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm whitespace-nowrap transition-colors ${isDark ? 'hover:bg-gray-800 text-gray-300' : 'hover:bg-green-50 text-gray-700 hover:text-green-700'}`}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm whitespace-nowrap transition-all ${isDark ? 'hover:bg-slate-800 text-slate-300' : 'hover:bg-green-50 text-slate-700 hover:text-green-700'}`}
               >
-                <span>{cat.icon}</span>
-                <span className="hidden sm:inline">{cat.name}</span>
+                <span className="text-base">{cat.icon}</span>
+                <span className="font-medium">{cat.name}</span>
               </Link>
             ))}
           </div>
@@ -210,27 +227,27 @@ export default function Header() {
 
       {/* Mobile Menu */}
       {showMobileMenu && (
-        <div className={`lg:hidden absolute top-full left-0 right-0 shadow-xl border-b ${isDark ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'}`}>
-          <div className="p-4 space-y-2">
-            <Link to="/profile" onClick={() => setShowMobileMenu(false)} className={`flex items-center gap-3 p-3 rounded-xl ${isDark ? 'hover:bg-gray-800' : 'hover:bg-gray-50'}`}>
+        <div className={`lg:hidden absolute top-full left-0 right-0 shadow-2xl border-b ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+          <div className="p-4 space-y-1">
+            <Link to="/admin" onClick={() => setShowMobileMenu(false)} className={`flex items-center gap-3 p-3 rounded-xl ${isDark ? 'hover:bg-slate-800 text-purple-400' : 'hover:bg-purple-50 text-purple-600'}`}>
+              <Settings size={20} />
+              <span className="font-medium">پنل مدیریت</span>
+            </Link>
+            <Link to="/profile" onClick={() => setShowMobileMenu(false)} className={`flex items-center gap-3 p-3 rounded-xl ${isDark ? 'hover:bg-slate-800' : 'hover:bg-slate-50'}`}>
               <User size={20} />
               <span>حساب کاربری</span>
             </Link>
-            <div className={`flex items-center gap-3 p-3 rounded-xl ${isDark ? 'hover:bg-gray-800' : 'hover:bg-gray-50'}`}>
-              <MapPin size={20} />
-              <span>تهران، ولنجک</span>
-            </div>
-            <hr className={isDark ? 'border-gray-700' : 'border-gray-200'} />
-            <p className="text-sm font-medium text-gray-500 px-3">دسته‌بندی‌ها</p>
+            <hr className={isDark ? 'border-slate-800' : 'border-slate-200'} />
+            <p className="text-xs font-medium text-slate-400 px-3 py-2">دسته‌بندی‌ها</p>
             {categories.map((cat) => (
               <Link
                 key={cat.id}
                 to={`/category/${cat.id}`}
                 onClick={() => setShowMobileMenu(false)}
-                className={`flex items-center gap-3 p-3 rounded-xl ${isDark ? 'hover:bg-gray-800' : 'hover:bg-gray-50'}`}
+                className={`flex items-center gap-3 p-3 rounded-xl ${isDark ? 'hover:bg-slate-800' : 'hover:bg-slate-50'}`}
               >
                 <span className="text-xl">{cat.icon}</span>
-                <span>{cat.name}</span>
+                <span className="font-medium">{cat.name}</span>
               </Link>
             ))}
           </div>

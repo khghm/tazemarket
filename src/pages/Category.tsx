@@ -1,81 +1,103 @@
 import { useState, useMemo } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { Filter, X, ChevronLeft, SlidersHorizontal } from 'lucide-react';
-import { products } from '../data/products';
-import { categories } from '../data/categories';
+import { useParams } from 'react-router-dom';
+import { SlidersHorizontal, Grid3X3, List, X } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
+import { products, Product } from '../data/products';
+import { categories } from '../data/categories';
 import { useThemeStore } from '../store/themeStore';
 
 export default function CategoryPage() {
-  const { categoryId } = useParams();
+  const { id } = useParams();
   const isDark = useThemeStore((s) => s.isDark);
-  const [sortBy, setSortBy] = useState<'popular' | 'cheapest' | 'expensive' | 'discount'>('popular');
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000000]);
-  const [selectedBrand, setSelectedBrand] = useState<string>('');
-  const [inStockOnly, setInStockOnly] = useState(false);
+  const [sortBy, setSortBy] = useState('popular');
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 600000]);
   const [showFilters, setShowFilters] = useState(false);
+  const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
+  const [onlyDiscounted, setOnlyDiscounted] = useState(false);
+  const [onlyInStock, setOnlyInStock] = useState(false);
 
-  const category = categories.find((c) => c.id === categoryId);
-  const categoryProducts = products.filter((p) => p.category === categoryId);
-  const brands = [...new Set(categoryProducts.map((p) => p.brand))];
+  const category = categories.find((c) => c.id === id);
+  const subcategories = category?.subcategories || [];
+
+  const [activeSubcategory, setActiveSubcategory] = useState<string | null>(null);
 
   const filteredProducts = useMemo(() => {
-    let result = categoryProducts.filter((p) => {
-      if (p.price < priceRange[0] || p.price > priceRange[1]) return false;
-      if (selectedBrand && p.brand !== selectedBrand) return false;
-      if (inStockOnly && !p.inStock) return false;
-      return true;
-    });
+    let result = products;
+
+    if (id) {
+      result = result.filter((p) => p.category === id);
+    }
+    if (activeSubcategory) {
+      result = result.filter((p) => p.subcategory === activeSubcategory);
+    }
+    if (onlyDiscounted) {
+      result = result.filter((p) => p.discount && p.discount > 0);
+    }
+    if (onlyInStock) {
+      result = result.filter((p) => p.inStock);
+    }
+    if (selectedBrands.length > 0) {
+      result = result.filter((p) => selectedBrands.includes(p.brand));
+    }
+    result = result.filter((p) => p.price >= priceRange[0] && p.price <= priceRange[1]);
 
     switch (sortBy) {
-      case 'cheapest':
-        result.sort((a, b) => a.price - b.price);
-        break;
-      case 'expensive':
-        result.sort((a, b) => b.price - a.price);
-        break;
-      case 'discount':
-        result.sort((a, b) => (b.discount || 0) - (a.discount || 0));
-        break;
-      default:
-        result.sort((a, b) => b.rating - a.rating);
+      case 'price-asc': return [...result].sort((a, b) => a.price - b.price);
+      case 'price-desc': return [...result].sort((a, b) => b.price - a.price);
+      case 'rating': return [...result].sort((a, b) => b.rating - a.rating);
+      case 'discount': return [...result].sort((a, b) => (b.discount || 0) - (a.discount || 0));
+      default: return [...result].sort((a, b) => b.reviewCount - a.reviewCount);
     }
-    return result;
-  }, [categoryProducts, sortBy, priceRange, selectedBrand, inStockOnly]);
+  }, [id, activeSubcategory, sortBy, priceRange, selectedBrands, onlyDiscounted, onlyInStock]);
 
-  const resetFilters = () => {
-    setPriceRange([0, 1000000]);
-    setSelectedBrand('');
-    setInStockOnly(false);
-    setSortBy('popular');
+  const allBrands = useMemo(() => {
+    const catProducts = id ? products.filter(p => p.category === id) : products;
+    return [...new Set(catProducts.map(p => p.brand))];
+  }, [id]);
+
+  const toggleBrand = (brand: string) => {
+    setSelectedBrands(prev => prev.includes(brand) ? prev.filter(b => b !== brand) : [...prev, brand]);
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-6">
-      {/* Breadcrumb */}
-      <div className={`flex items-center gap-2 text-sm mb-6 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-        <Link to="/" className="hover:text-green-600">خانه</Link>
-        <ChevronLeft size={14} />
-        <span className={isDark ? 'text-white' : 'text-gray-800'}>{category?.name}</span>
-      </div>
-
-      {/* Category Header */}
-      <div className={`flex items-center gap-4 mb-6 p-6 rounded-2xl ${isDark ? 'bg-gray-800' : 'bg-white'} border ${isDark ? 'border-gray-700' : 'border-gray-100'}`}>
-        <span className="text-5xl">{category?.icon}</span>
-        <div>
-          <h1 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-800'}`}>{category?.name}</h1>
-          <p className="text-sm text-gray-500">{categoryProducts.length} محصول</p>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+      {/* Header */}
+      <div className="mb-6">
+        <div className="flex items-center gap-3 mb-2">
+          <span className="text-3xl">{category?.icon}</span>
+          <h1 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>
+            {category?.name || 'همه محصولات'}
+          </h1>
+          <span className={`text-sm px-3 py-1 rounded-full ${isDark ? 'bg-slate-800 text-slate-400' : 'bg-slate-100 text-slate-600'}`}>
+            {filteredProducts.length} محصول
+          </span>
         </div>
+        {category?.description && (
+          <p className="text-sm text-slate-500">{category.description}</p>
+        )}
       </div>
 
       {/* Subcategories */}
-      {category && (
-        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar mb-6">
-          {category.subcategories.map((sub) => (
+      {subcategories.length > 0 && (
+        <div className="flex items-center gap-2 mb-6 overflow-x-auto no-scrollbar pb-2">
+          <button
+            onClick={() => setActiveSubcategory(null)}
+            className={`px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all ${
+              !activeSubcategory
+                ? 'bg-green-600 text-white shadow-lg shadow-green-600/20'
+                : isDark ? 'bg-slate-800 text-slate-300 hover:bg-slate-700' : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'
+            }`}
+          >
+            همه
+          </button>
+          {subcategories.map((sub) => (
             <button
               key={sub.id}
-              className={`px-4 py-2 rounded-xl text-sm whitespace-nowrap transition-colors ${
-                isDark ? 'bg-gray-800 hover:bg-gray-700 text-gray-300' : 'bg-white hover:bg-green-50 border border-gray-200 text-gray-700'
+              onClick={() => setActiveSubcategory(sub.id)}
+              className={`px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all ${
+                activeSubcategory === sub.id
+                  ? 'bg-green-600 text-white shadow-lg shadow-green-600/20'
+                  : isDark ? 'bg-slate-800 text-slate-300 hover:bg-slate-700' : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'
               }`}
             >
               {sub.name}
@@ -85,132 +107,99 @@ export default function CategoryPage() {
       )}
 
       {/* Toolbar */}
-      <div className="flex items-center justify-between mb-4">
+      <div className={`flex items-center justify-between p-4 rounded-2xl mb-6 ${isDark ? 'bg-slate-800/50 border-slate-700/50' : 'bg-white border-slate-100'} border`}>
         <button
           onClick={() => setShowFilters(!showFilters)}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border transition-colors md:hidden ${
-            isDark ? 'border-gray-700 hover:bg-gray-800 text-gray-300' : 'border-gray-200 hover:bg-gray-50 text-gray-700'
-          }`}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-colors ${isDark ? 'bg-slate-700 hover:bg-slate-600 text-white' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'}`}
         >
           <SlidersHorizontal size={16} />
-          <span className="text-sm">فیلترها</span>
+          <span className="text-sm font-medium">فیلترها</span>
         </button>
 
-        <div className="flex items-center gap-2">
-          <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>مرتب‌سازی:</span>
+        <div className="flex items-center gap-3">
           <select
             value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-            className={`px-3 py-2 rounded-xl text-sm border outline-none ${
-              isDark ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-700'
-            }`}
+            onChange={(e) => setSortBy(e.target.value)}
+            className={`px-4 py-2.5 rounded-xl text-sm ${isDark ? 'bg-slate-700 border-slate-600 text-white' : 'bg-slate-50 border-slate-200 text-slate-700'} border outline-none`}
           >
-            <option value="popular">محبوب‌ترین</option>
-            <option value="cheapest">ارزان‌ترین</option>
-            <option value="expensive">گران‌ترین</option>
+            <option value="popular">پربازدیدترین</option>
+            <option value="price-asc">ارزان‌ترین</option>
+            <option value="price-desc">گران‌ترین</option>
+            <option value="rating">بالاترین امتیاز</option>
             <option value="discount">بیشترین تخفیف</option>
           </select>
         </div>
       </div>
 
       <div className="flex gap-6">
-        {/* Sidebar Filters - Desktop */}
-        <aside className={`hidden md:block w-64 shrink-0 space-y-6 ${isDark ? 'text-white' : 'text-gray-800'}`}>
-          <div className={`p-4 rounded-2xl border ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'}`}>
-            <h3 className="font-bold text-sm mb-3 flex items-center gap-2">
-              <Filter size={16} />
-              فیلترها
-            </h3>
+        {/* Filters Sidebar */}
+        {showFilters && (
+          <div className={`w-72 shrink-0 rounded-2xl p-5 h-fit sticky top-32 ${isDark ? 'bg-slate-800/50 border-slate-700/50' : 'bg-white border-slate-100'} border`}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className={`font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>فیلترها</h3>
+              <button onClick={() => setShowFilters(false)} className="text-slate-400 hover:text-slate-600">
+                <X size={18} />
+              </button>
+            </div>
 
             {/* Price Range */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">محدوده قیمت</label>
-              <div className="flex items-center gap-2">
+            <div className="mb-6">
+              <h4 className={`text-sm font-medium mb-3 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>محدوده قیمت</h4>
+              <div className="space-y-2">
                 <input
-                  type="number"
-                  value={priceRange[0]}
-                  onChange={(e) => setPriceRange([Number(e.target.value), priceRange[1]])}
-                  placeholder="از"
-                  className={`w-full px-3 py-2 rounded-lg text-sm border ${isDark ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}
-                />
-                <span className="text-xs text-gray-500">تا</span>
-                <input
-                  type="number"
+                  type="range"
+                  min="0"
+                  max="600000"
+                  step="10000"
                   value={priceRange[1]}
-                  onChange={(e) => setPriceRange([priceRange[0], Number(e.target.value)])}
-                  placeholder="تا"
-                  className={`w-full px-3 py-2 rounded-lg text-sm border ${isDark ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}
+                  onChange={(e) => setPriceRange([priceRange[0], parseInt(e.target.value)])}
+                  className="w-full accent-green-600"
                 />
+                <div className="flex justify-between text-xs text-slate-500">
+                  <span>{priceRange[0].toLocaleString()} ت</span>
+                  <span>{priceRange[1].toLocaleString()} ت</span>
+                </div>
               </div>
             </div>
 
-            {/* Brand */}
-            <div className="space-y-2 mt-4">
-              <label className="text-sm font-medium">برند</label>
-              <select
-                value={selectedBrand}
-                onChange={(e) => setSelectedBrand(e.target.value)}
-                className={`w-full px-3 py-2 rounded-lg text-sm border ${isDark ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}
-              >
-                <option value="">همه برندها</option>
-                {brands.map((b) => (
-                  <option key={b} value={b}>{b}</option>
+            {/* Brands */}
+            <div className="mb-6">
+              <h4 className={`text-sm font-medium mb-3 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>برند</h4>
+              <div className="space-y-2 max-h-40 overflow-y-auto">
+                {allBrands.map((brand) => (
+                  <label key={brand} className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={selectedBrands.includes(brand)}
+                      onChange={() => toggleBrand(brand)}
+                      className="w-4 h-4 accent-green-600 rounded"
+                    />
+                    <span className={`text-sm ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>{brand}</span>
+                  </label>
                 ))}
-              </select>
+              </div>
             </div>
 
-            {/* In Stock */}
-            <div className="mt-4">
-              <label className="flex items-center gap-2 cursor-pointer">
+            {/* Toggles */}
+            <div className="space-y-3">
+              <label className="flex items-center justify-between cursor-pointer">
+                <span className={`text-sm ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>فقط تخفیف‌دار</span>
                 <input
                   type="checkbox"
-                  checked={inStockOnly}
-                  onChange={(e) => setInStockOnly(e.target.checked)}
-                  className="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500"
+                  checked={onlyDiscounted}
+                  onChange={(e) => setOnlyDiscounted(e.target.checked)}
+                  className="w-5 h-5 accent-green-600 rounded"
                 />
-                <span className="text-sm">فقط کالاهای موجود</span>
               </label>
-            </div>
-
-            <button
-              onClick={resetFilters}
-              className="w-full mt-4 py-2 text-sm text-red-500 hover:text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
-            >
-              حذف فیلترها
-            </button>
-          </div>
-        </aside>
-
-        {/* Mobile Filters Overlay */}
-        {showFilters && (
-          <div className="fixed inset-0 z-50 md:hidden">
-            <div className="absolute inset-0 bg-black/50" onClick={() => setShowFilters(false)} />
-            <div className={`absolute right-0 top-0 bottom-0 w-80 p-6 overflow-y-auto ${isDark ? 'bg-gray-900' : 'bg-white'}`}>
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="font-bold text-lg">فیلترها</h3>
-                <button onClick={() => setShowFilters(false)}><X size={24} /></button>
-              </div>
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium block mb-2">محدوده قیمت (تومان)</label>
-                  <div className="flex gap-2">
-                    <input type="number" value={priceRange[0]} onChange={(e) => setPriceRange([Number(e.target.value), priceRange[1]])} className={`flex-1 px-3 py-2 rounded-lg text-sm border ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'}`} />
-                    <input type="number" value={priceRange[1]} onChange={(e) => setPriceRange([priceRange[0], Number(e.target.value)])} className={`flex-1 px-3 py-2 rounded-lg text-sm border ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'}`} />
-                  </div>
-                </div>
-                <div>
-                  <label className="text-sm font-medium block mb-2">برند</label>
-                  <select value={selectedBrand} onChange={(e) => setSelectedBrand(e.target.value)} className={`w-full px-3 py-2 rounded-lg text-sm border ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'}`}>
-                    <option value="">همه</option>
-                    {brands.map((b) => <option key={b} value={b}>{b}</option>)}
-                  </select>
-                </div>
-                <label className="flex items-center gap-2">
-                  <input type="checkbox" checked={inStockOnly} onChange={(e) => setInStockOnly(e.target.checked)} className="w-4 h-4 rounded" />
-                  <span className="text-sm">فقط موجود</span>
-                </label>
-                <button onClick={() => { resetFilters(); setShowFilters(false); }} className="w-full py-3 bg-red-500 text-white rounded-xl">حذف فیلترها</button>
-              </div>
+              <label className="flex items-center justify-between cursor-pointer">
+                <span className={`text-sm ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>فقط موجود</span>
+                <input
+                  type="checkbox"
+                  checked={onlyInStock}
+                  onChange={(e) => setOnlyInStock(e.target.checked)}
+                  className="w-5 h-5 accent-green-600 rounded"
+                />
+              </label>
             </div>
           </div>
         )}
@@ -224,10 +213,10 @@ export default function CategoryPage() {
               ))}
             </div>
           ) : (
-            <div className={`text-center py-20 rounded-2xl ${isDark ? 'bg-gray-800' : 'bg-white'}`}>
-              <span className="text-5xl mb-4 block">🔍</span>
-              <p className={`text-lg font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>محصولی با این فیلترها یافت نشد</p>
-              <button onClick={resetFilters} className="mt-4 text-green-600 hover:text-green-700 text-sm font-medium">حذف فیلترها</button>
+            <div className={`text-center py-16 rounded-2xl ${isDark ? 'bg-slate-800/50' : 'bg-white'}`}>
+              <p className="text-4xl mb-4">🔍</p>
+              <p className={`font-medium ${isDark ? 'text-white' : 'text-slate-800'}`}>محصولی یافت نشد</p>
+              <p className="text-sm text-slate-500 mt-2">فیلترها را تغییر دهید</p>
             </div>
           )}
         </div>
